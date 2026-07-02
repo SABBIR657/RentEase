@@ -16,21 +16,22 @@ exports.register = async (req, res) => {
   if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
 
   const verifyToken = crypto.randomBytes(32).toString('hex');
-  const user = await User.create({ name, email, password, role: userRole, verifyToken });
+  // const user = await User.create({ name, email, password, role: userRole, verifyToken });
+  const user = await User.create({ name, email, password, role: userRole, isVerified: true });
 
   // Send verification email
-  const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${verifyToken}`;
-  await sendEmail({
-    to: email,
-    subject: 'Verify your RentEase account',
-    html: `<h2>Welcome to RentEase!</h2><p>Click below to verify your email:</p>
-           <a href="${verifyUrl}" style="background:#1B5E9B;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Verify Email</a>`,
-  }).catch(() => {}); // don't fail if email fails in dev
+  // const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${verifyToken}`;
+  // await sendEmail({
+  //   to: email,
+  //   subject: 'Verify your RentEase account',
+  //   html: `<h2>Welcome to RentEase!</h2><p>Click below to verify your email:</p>
+  //          <a href="${verifyUrl}" style="background:#1B5E9B;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Verify Email</a>`,
+  // }).catch(() => {}); // don't fail if email fails in dev
 
   const token = generateToken(user._id);
   res.status(201).json({
     success: true,
-    message: 'Registration successful. Please verify your email.',
+    message: 'Registration successful',
     data: { token, user: { _id: user._id, name: user.name, email: user.email, role: user.role } },
   });
 };
