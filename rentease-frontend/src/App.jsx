@@ -46,8 +46,20 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 // Route guards
 const ProtectedRoute = ({ children, roles }) => {
   const { user, token } = useAuthStore();
+
   if (!token) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user?.role)) return <Navigate to="/" replace />;
+
+  // Wait for user to be available
+  if (!user) return null;
+
+  if (roles && !roles.includes(user.role)) {
+    // Redirect to correct dashboard instead of home
+    if (user.role === "admin") return <Navigate to="/admin" replace />;
+    if (user.role === "owner") return <Navigate to="/owner" replace />;
+    if (user.role === "tenant") return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 

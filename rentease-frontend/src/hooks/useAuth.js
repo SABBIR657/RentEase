@@ -18,6 +18,8 @@ export const useLogin = () => {
       else if (role === 'owner') navigate('/owner')
       else navigate('/dashboard')
     },
+
+
     onError: (err) => toast.error(err.response?.data?.message || 'Login failed'),
   })
 }
@@ -27,7 +29,7 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: (data) => api.post('/auth/register', data),
     onSuccess: () => {
-      toast.success('Account created! Please verify your email.')
+      toast.success('Account created! Please verify')
       navigate('/login')
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Registration failed'),
