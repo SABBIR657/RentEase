@@ -30,3 +30,13 @@ export const useMapProperties = () => {
     staleTime: 1000 * 60 * 10,
   })
 }
+
+
+export const useSearchProperties = (params) => {
+  return useQuery({
+    queryKey: ['properties', 'search', params],
+    queryFn: () => api.get('/properties', { params }).then(r => r.data),
+    enabled: true,
+    keepPreviousData: true, // keeps old data while fetching new page
+  })
+}
