@@ -10,7 +10,7 @@ import os
 # ─────────────────────────────────────────────────────────────────
 
 CSV_FILE = os.path.join(os.path.dirname(__file__), "dataset.csv")      # ← put your Kaggle CSV filename here
-MONGO_URI   ="mongodb+srv://RentEase:11223@cluster0.gmtwazh.mongodb.net/?appName=Cluster0"
+MONGO_URI = "mongodb+srv://RentEase:11223@cluster0.gmtwazh.mongodb.net/rentease?retryWrites=true&w=majority&appName=Cluster0"
 DB_NAME     = "rentease"
 COLLECTION  = "properties"
 
