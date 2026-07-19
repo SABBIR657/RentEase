@@ -14,17 +14,38 @@ const notify = async (userId, type, title, body, link = '') => {
 // POST /api/v1/applications
 exports.submitApplication = async (req, res) => {
   const { propertyId, message } = req.body;
+
   const property = await Property.findById(propertyId).populate('ownerId', 'name email');
-  if (!property) return res.status(404).json({ success: false, message: 'Property not found' });
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+
+  // Guard — Kaggle imported properties have no owner
+  if (!property.ownerId) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'This property cannot accept applications — no owner assigned.' 
+    });
+  }
 
   const documents = req.files ? req.files.map(f => ({ label: f.originalname, url: f.path })) : [];
+
   const application = await Application.create({
-    tenantId: req.user._id, propertyId, ownerId: property.ownerId._id, message, documents,
+    tenantId:   req.user._id,
+    propertyId,
+    ownerId:    property.ownerId._id,
+    message,
+    documents,
   });
 
   // Notify owner
-  await notify(property.ownerId._id, 'application', 'New Application Received',
-    `${req.user.name} applied for ${property.title}`, `/dashboard/applications`);
+  await notify(
+    property.ownerId._id,
+    'application',
+    'New Application Received',
+    `${req.user.name} applied for ${property.title}`,
+    '/dashboard/applications'
+  );
 
   res.status(201).json({ success: true, data: application });
 };
