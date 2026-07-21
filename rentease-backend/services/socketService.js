@@ -28,7 +28,7 @@ const initSocket = (server) => {
     console.log(`Socket connected: ${socket.user.name}`);
 
     // Join personal notification room
-    socket.join(`user_${socket.user._id}`);
+    socket.join(`user_${socket.user._id.toString()}`);
 
     // Join property conversation room
     socket.on('join_room', ({ propertyId, otherUserId }) => {
@@ -38,15 +38,61 @@ const initSocket = (server) => {
     });
 
     // Send message
-    socket.on('send_message', ({ propertyId, otherUserId, content }) => {
-      const ids  = [socket.user._id.toString(), otherUserId].sort();
-      const room = `property_${propertyId}_${ids[0]}_${ids[1]}`;
-      io.to(room).emit('receive_message', {
-        senderId: socket.user._id,
-        content,
-        createdAt: new Date(),
-      });
-    });
+  socket.on('send_message', ({ propertyId, otherUserId, content, _id, senderId, createdAt }) => {
+  const ids  = [socket.user._id.toString(), otherUserId].sort()
+  const room = `property_${propertyId}_${ids[0]}_${ids[1]}`
+
+  // Broadcast to everyone in room INCLUDING sender
+  // But frontend filters by senderId to avoid duplicates
+  io.to(room).emit('receive_message', {
+    _id,
+    senderId,
+    content,
+    createdAt,
+    propertyId,
+  })
+})
+
+// socket.on(
+//   'send_message',
+//   ({
+//     propertyId,
+//     otherUserId,
+//     receiverId,
+//     content,
+//     _id,
+//     senderId,
+//     createdAt,
+//   }) => {
+//     const ids = [
+//       socket.user._id.toString(),
+//       otherUserId.toString(),
+//     ].sort();
+
+//     const room =
+//       `property_${propertyId}_${ids[0]}_${ids[1]}`;
+
+//     console.log("📤 Broadcasting message:", {
+//       room,
+//       propertyId,
+//       senderId,
+//       receiverId,
+//       content,
+//     });
+
+//     io.to(room).emit(
+//       'receive_message',
+//       {
+//         _id,
+//         senderId,
+//         receiverId,
+//         content,
+//         createdAt,
+//         propertyId,
+//       }
+//     );
+//   }
+// );
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.user.name}`);

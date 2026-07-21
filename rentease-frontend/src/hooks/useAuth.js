@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '../api/axiosInstance'
 import { useAuthStore } from '../store/authStore'
+import { disconnectSocket } from './useSocket'
+
 
 export const useLogin = () => {
   const { setAuth } = useAuthStore()
@@ -40,6 +42,7 @@ export const useLogout = () => {
   const { logout } = useAuthStore()
   const navigate   = useNavigate()
   return () => {
+    disconnectSocket() // ← clean up socket on logout
     logout()
     toast.success('Logged out')
     navigate('/')

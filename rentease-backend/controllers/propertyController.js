@@ -1,5 +1,15 @@
 const Property    = require('../models/Property');
 const APIFeatures = require('../utils/apiFeatures');
+const Notification = require('../models/Notification');
+const { sendNotification } = require('../services/socketService');
+
+
+// Helper
+const notify = async (userId, type, title, body, link = '') => {
+  const n = await Notification.create({ userId, type, title, body, link });
+  sendNotification(userId.toString(), n);
+};
+
 
 // GET /api/v1/properties
 exports.getProperties = async (req, res) => {
@@ -116,15 +126,51 @@ exports.getMyListings = async (req, res) => {
 
 // PATCH /api/v1/properties/:id/approve  [admin]
 exports.approveProperty = async (req, res) => {
-  const property = await Property.findByIdAndUpdate(req.params.id, { isApproved: true }, { new: true });
-  if (!property) return res.status(404).json({ success: false, message: 'Property not found' });
+  const property = await Property.findByIdAndUpdate(
+    req.params.id,
+    { isApproved: true },
+    { new: true }
+  );
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+
+  // Notify owner
+  if (property.ownerId) {
+    await notify(
+      property.ownerId,
+      'system',
+      'Listing Approved! 🎉',
+      `Your listing "${property.title}" has been approved and is now live.`,
+      '/owner/listings'
+    );
+  }
+
   res.json({ success: true, data: property });
 };
 
 // PATCH /api/v1/properties/:id/reject  [admin]
 exports.rejectProperty = async (req, res) => {
-  const property = await Property.findByIdAndUpdate(req.params.id, { isApproved: false }, { new: true });
-  if (!property) return res.status(404).json({ success: false, message: 'Property not found' });
+  const property = await Property.findByIdAndUpdate(
+    req.params.id,
+    { isApproved: false },
+    { new: true }
+  );
+  if (!property) {
+    return res.status(404).json({ success: false, message: 'Property not found' });
+  }
+
+  // Notify owner
+  if (property.ownerId) {
+    await notify(
+      property.ownerId,
+      'system',
+      'Listing Update',
+      `Your listing "${property.title}" was not approved. Please review and resubmit.`,
+      '/owner/listings'
+    );
+  }
+
   res.json({ success: true, data: property });
 };
 

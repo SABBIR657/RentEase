@@ -7,29 +7,68 @@ const getRoomId = (uid1, uid2, propertyId) => {
 
 // GET /api/v1/messages/conversations
 exports.getConversations = async (req, res) => {
-  const messages = await Message.aggregate([
-    { $match: { $or: [{ senderId: req.user._id }, { receiverId: req.user._id }] } },
-    { $sort: { createdAt: -1 } },
-    { $group: { _id: { propertyId: '$propertyId', room: { $cond: [{ $lt: ['$senderId', '$receiverId'] }, { $concat: [{ $toString: '$senderId' }, '_', { $toString: '$receiverId' }] }, { $concat: [{ $toString: '$receiverId' }, '_', { $toString: '$senderId' }] }] } }, lastMessage: { $first: '$$ROOT' }, unread: { $sum: { $cond: [{ $and: [{ $eq: ['$receiverId', req.user._id] }, { $eq: ['$isRead', false] }] }, 1, 0] } } } },
-    { $sort: { 'lastMessage.createdAt': -1 } },
-  ]);
-  res.json({ success: true, data: messages });
-};
+  const userId = req.user._id
+
+  // Get all messages involving this user
+  const messages = await Message.find({
+    $or: [{ senderId: userId }, { receiverId: userId }]
+  })
+  .populate('senderId',   'name avatar')
+  .populate('receiverId', 'name avatar')
+  .populate('propertyId', 'title')
+  .sort('-createdAt')
+
+  // Group by conversation (propertyId + other user)
+  const convoMap = new Map()
+
+  messages.forEach(msg => {
+    const otherId = msg.senderId._id.toString() === userId.toString()
+      ? msg.receiverId._id.toString()
+      : msg.senderId._id.toString()
+
+    const key = `${msg.propertyId?._id}_${otherId}`
+
+    if (!convoMap.has(key)) {
+      convoMap.set(key, {
+        lastMessage: msg,
+        unread: (!msg.isRead && msg.receiverId._id.toString() === userId.toString()) ? 1 : 0
+      })
+    } else {
+      const existing = convoMap.get(key)
+      if (!msg.isRead && msg.receiverId._id.toString() === userId.toString()) {
+        existing.unread += 1
+      }
+    }
+  })
+
+  const conversations = Array.from(convoMap.values())
+
+  res.json({ success: true, data: conversations })
+}
 
 // GET /api/v1/messages/:propertyId/:userId
 exports.getThread = async (req, res) => {
-  const { propertyId, userId } = req.params;
+  const { propertyId, userId } = req.params
+
   const messages = await Message.find({
     propertyId,
     $or: [
       { senderId: req.user._id, receiverId: userId },
       { senderId: userId, receiverId: req.user._id },
     ],
-  }).sort('createdAt');
+  })
+  .populate('senderId',   'name avatar')
+  .populate('receiverId', 'name avatar')
+  .sort('createdAt')
+
   // Mark received messages as read
-  await Message.updateMany({ propertyId, receiverId: req.user._id, senderId: userId, isRead: false }, { isRead: true });
-  res.json({ success: true, data: messages });
-};
+  await Message.updateMany(
+    { propertyId, receiverId: req.user._id, senderId: userId, isRead: false },
+    { isRead: true }
+  )
+
+  res.json({ success: true, data: messages })
+}
 
 // POST /api/v1/messages
 exports.sendMessage = async (req, res) => {

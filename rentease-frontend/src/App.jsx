@@ -42,6 +42,7 @@ import MessagesPage from "./pages/shared/MessagesPage";
 import NotificationsPage from "./pages/shared/NotificationsPage";
 import ProfilePage from "./pages/shared/ProfilePage";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import { useSocket } from "./hooks/useSocket";
 
 // Route guards
 const ProtectedRoute = ({ children, roles }) => {
@@ -78,6 +79,7 @@ const PublicLayout = ({ children }) => (
 );
 
 export default function App() {
+  useSocket()
   return (
     <BrowserRouter>
       <Routes>
