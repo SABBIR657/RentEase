@@ -42,6 +42,9 @@ export default function PropertyDetailPage() {
   const [applyModal, setApplyModal] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
 
+
+  
+
   const { mutate: submitApplication, isPending: applying } = useMutation({
     mutationFn: () =>
       api.post("/applications", {

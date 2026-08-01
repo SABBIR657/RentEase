@@ -47,18 +47,23 @@ export default function MyFavourites() {
             {favourites.length} saved properties
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {favourites.map((fav) => (
-              <div key={fav._id} className="relative group">
-                <PropertyCard property={fav.propertyId} showFavButton={false} />
-                <button
-                  onClick={() => remove(fav.propertyId._id)}
-                  className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow
+            {favourites
+              .filter((fav) => fav.propertyId) // ← filter out null properties
+              .map((fav) => (
+                <div key={fav._id} className="relative group">
+                  <PropertyCard
+                    property={fav.propertyId}
+                    showFavButton={false}
+                  />
+                  <button
+                    onClick={() => remove(fav.propertyId._id)}
+                    className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow
                     text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
           </div>
         </>
       )}

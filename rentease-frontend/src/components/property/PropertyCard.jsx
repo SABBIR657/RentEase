@@ -14,6 +14,8 @@ export default function PropertyCard({ property, showFavButton = true }) {
   const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
+   if (!property) return null
+
   const { mutate: toggleFav } = useMutation({
     mutationFn: (id) => api.post(`/favourites/${id}`),
     onSuccess: () => {
